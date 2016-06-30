@@ -1,6 +1,7 @@
 #include "Application3D.h"
 #include "CZDefine.h"
 #include "CZGeometry.h"
+#include "Cube.h"
 #include "CZLog.h"
 #include <ctime>
 #include <vector>
@@ -223,6 +224,73 @@ bool Application3D::setRenderBufferSize(int w, int h)
 
 void Application3D::frame()
 {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
+
+# ifdef _WIN32
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(scene.eyePosition.x,scene.eyePosition.y,scene.eyePosition.z, 0,0,0,0,1,0);
+# endif
+
+
+	glClear(GL_DEPTH_BUFFER_BIT);
+	CZMat4 viewMat,modelMat;
+	viewMat.SetLookAt(scene.eyePosition.x, scene.eyePosition.y, scene.eyePosition.z, 0, 0, 0, 0, 1, 0);
+
+	CZShader *pShader = getShader(kDirectionalLightShading);
+
+	if (pShader == NULL)
+	{
+		LOG_ERROR("there's no shader designated\n");
+		return;
+	}
+	pShader->begin();
+	CZCheckGLError();
+
+	// common uniforms
+	glUniform3f(pShader->getUniformLocation("ambientLight.intensities"),
+		scene.ambientLight.intensity.x,
+		scene.ambientLight.intensity.y,
+		scene.ambientLight.intensity.z);
+
+	glUniform3f(pShader->getUniformLocation("directionalLight.direction"),
+		scene.directionalLight.direction.x,scene.directionalLight.direction.y,scene.directionalLight.direction.z);
+
+	glUniform3f(pShader->getUniformLocation("eyePosition"),scene.eyePosition.x,scene.eyePosition.y,scene.eyePosition.z);
+
+	glUniform3f(pShader->getUniformLocation("directionalLight.intensities"),
+		scene.directionalLight.intensity.x,
+		scene.directionalLight.intensity.y, 
+		scene.directionalLight.intensity.z);
+	CZCheckGLError();
+	
+	modelMat.LoadIdentity();
+	glUniformMatrix4fv(pShader->getUniformLocation("mvpMat"), 1, GL_FALSE, projMat * viewMat * modelMat);
+	glUniformMatrix4fv(pShader->getUniformLocation("modelMat"), 1, GL_FALSE, modelMat);
+	glUniformMatrix4fv(pShader->getUniformLocation("modelInverseTransposeMat"), 1, GL_FALSE, modelMat.GetInverseTranspose());
+
+	Cube cube;
+	cube.draw(pShader);
+
+	CZCheckGLError();
+
+	pShader->end();
+#ifdef USE_OPENGL
+	glColor3f(1.0,0.0,0.0);
+	glPushMatrix();
+	glTranslatef(scene.light.position.x, scene.light.position.y, scene.light.position.z);
+	glDisable(GL_TEXTURE_2D);
+	glutSolidSphere(2, 100, 100);
+	glPopMatrix();
+#endif
+
+#ifdef SHOW_RENDER_TIME
+	finish = clock();
+	double totalTime = (double)(finish - start) / CLOCKS_PER_SEC;
+	LOG_INFO("rendering time is %0.6f, FPS = %0.1f\n",totalTime, 1.0f/totalTime);
+#endif
+
+	return;
 #ifdef SHOW_RENDER_TIME
 	static clock_t start, finish;
 	start = clock();
@@ -270,7 +338,6 @@ void Application3D::frame()
 		scene.directionalLight.intensity.y, 
 		scene.directionalLight.intensity.z);
 	CZCheckGLError();
-
 	for (auto i = 0; i < models.size(); i++) {
 		modelMat = translateMats[i] * scaleMats[i] * rotateMats[i];
 		glUniformMatrix4fv(pShader->getUniformLocation("mvpMat"), 1, GL_FALSE, projMat * viewMat * modelMat);

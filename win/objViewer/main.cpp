@@ -44,7 +44,7 @@ void Init()
 		app3d.loadObjModel(path,true);
 	}*/
 	//app3d.loadObjModel("../../data/oo.obj",false);
-	app3d.loadObjModel("../../data/大提琴/大提琴.obj",true);
+	//app3d.loadObjModel("../../data/DaTiQin.obj",true);
 	//app3d.loadObjModel("../../data/plane/plane.obj",true);
 	//app3d.loadObjModel("../../data/incomplete/planeIncomplete.obj");
 	//app3d.loadObjModel("../../data/box/box.obj");

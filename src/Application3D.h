@@ -27,10 +27,13 @@ public:
 
 	bool init(const char* sceneFilename = NULL);
 	bool loadObjModel(const char* filename, bool quickLoad = true);
-    bool clearObjModel();
+  bool clearObjModel();
 	bool setRenderBufferSize(int w, int h);
 	void frame();
 	void reset();
+	void createObj();
+	void foldObj();
+	void unFoldObj();
 
 #ifdef	__ANDROID__
 	bool createShader(ShaderType type,const char* vertFile, const char* fragFile, std::vector<std::string> &attributes,std::vector<std::string> &uniforms);

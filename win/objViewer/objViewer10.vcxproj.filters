@@ -84,6 +84,9 @@
     <ClInclude Include="..\..\src\CZObjModel.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\Cube.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\ReadMe.md" />
