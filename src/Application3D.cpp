@@ -1,7 +1,12 @@
 #include "Application3D.h"
 #include "CZDefine.h"
 #include "CZGeometry.h"
+<<<<<<< HEAD
 #include "Cube.h"
+=======
+#include "shape/CZShape.h"
+#include "shape/CZCube.hpp"
+>>>>>>> f009577a3cca8c816e82ceb19370a16ef62b3b3a
 #include "CZLog.h"
 #include <ctime>
 #include <vector>
@@ -143,11 +148,8 @@ bool Application3D::loadObjModel(const char* filename, bool quickLoad /* = true 
 		if(success && quickLoad)
 			pModel->saveAsBinary(tempFileName);
 	}
-
-	models.push_back(pModel);
-	translateMats.push_back(CZMat4());
-	rotateMats.push_back(CZMat4());
-	scaleMats.push_back(CZMat4());
+    
+    nodes.push_back(pModel);
 
 	reset();
 
@@ -159,14 +161,14 @@ bool Application3D::loadObjModel(const char* filename, bool quickLoad /* = true 
 
 bool Application3D::clearObjModel()
 {
-	for (auto i = 0; i < models.size(); i ++)
-	{
-		delete models[i];
-	}
-	models.clear();
-	translateMats.clear();
-	scaleMats.clear();
-	rotateMats.clear();
+    for(CZNodeArray::iterator itr = nodes.begin(); itr != nodes.end(); itr ++)
+    {
+        if((*itr)->getType() == CZNode::kObjModel)
+        {
+            delete (CZObjModel*)(*itr);
+            itr = nodes.erase(itr);
+        }
+    }
 
 	return true;
 }
@@ -224,6 +226,7 @@ bool Application3D::setRenderBufferSize(int w, int h)
 
 void Application3D::frame()
 {
+<<<<<<< HEAD
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
 # ifdef _WIN32
@@ -291,6 +294,11 @@ void Application3D::frame()
 #endif
 
 	return;
+=======
+    clock_t nowTime = clock();
+    animationManager.update(nowTime);
+    
+>>>>>>> f009577a3cca8c816e82ceb19370a16ef62b3b3a
 #ifdef SHOW_RENDER_TIME
 	static clock_t start, finish;
 	start = clock();
@@ -338,14 +346,22 @@ void Application3D::frame()
 		scene.directionalLight.intensity.y, 
 		scene.directionalLight.intensity.z);
 	CZCheckGLError();
+<<<<<<< HEAD
 	for (auto i = 0; i < models.size(); i++) {
 		modelMat = translateMats[i] * scaleMats[i] * rotateMats[i];
+=======
+
+	for (auto i = 0; i < nodes.size(); i++) {
+		modelMat = rootNode.translateMat * nodes[i]->translateMat *
+                    rootNode.scaleMat * nodes[i]->scaleMat *
+                    rootNode.rotateMat * nodes[i]->rotateMat;
+>>>>>>> f009577a3cca8c816e82ceb19370a16ef62b3b3a
 		glUniformMatrix4fv(pShader->getUniformLocation("mvpMat"), 1, GL_FALSE, projMat * viewMat * modelMat);
 		glUniformMatrix4fv(pShader->getUniformLocation("modelMat"), 1, GL_FALSE, modelMat);
 		glUniformMatrix4fv(pShader->getUniformLocation("modelInverseTransposeMat"), 1, GL_FALSE, modelMat.GetInverseTranspose());
 
-		CZObjModel *pModel = models[i];
-		pModel->draw(pShader);
+		CZNode *pNode = nodes[i];
+		pNode->draw(pShader);
 	}
 	CZCheckGLError();
 
@@ -366,15 +382,37 @@ void Application3D::frame()
 #endif
 }
 
+bool Application3D::createShape(const char* shapeFileName, bool contentInParam /*= false*/)
+{
+    CZCube *cube = new CZCube;
+    CZPoint3D p(0,0,0);
+    cube->create(p,1,1,1);
+    nodes.push_back(cube);
+    return true;
+}
+
+bool Application3D::clearShapes()
+{
+    for(CZNodeArray::iterator itr = nodes.begin(); itr != nodes.end(); itr ++)
+    {
+        if((*itr)->getType() == CZNode::kShape)
+        {
+            delete (CZShape*)(*itr);
+            itr = nodes.erase(itr);
+        }
+    }
+    
+    return true;
+}
+
 void Application3D::reset()
 {
 	/// model matrix
-	for (auto i = 0; i < models.size(); i ++) {
-		rotateMats[i].LoadIdentity();
-		translateMats[i].LoadIdentity();
-		scaleMats[i].LoadIdentity();
+	for (auto i = 0; i < nodes.size(); i ++) {
+        nodes[i]->resetMatrix();
 	}
-
+    rootNode.resetMatrix();
+    
 	/// color
 	modelColor = scene.mColor;
 	glClearColor(scene.bgColor.r, scene.bgColor.g, scene.bgColor.b, scene.bgColor.a);
@@ -470,66 +508,79 @@ void Application3D::setGLSLDirectory(const char* glslDir)
 }
 
 // control
-void Application3D::rotate(float deltaX, float deltaY, int modelIdx /*= -1*/)
+void Application3D::rotate(float deltaX, float deltaY, int nodeIdx /*= -1*/)
 {
 	CZMat4 tempMat;
-	if (modelIdx < 0)
-	{
-		for (auto i = 0; i < models.size(); i++)
-		{
-            tempMat.SetRotationY(deltaX);
-			rotateMats[i] = tempMat * rotateMats[i];
-			tempMat.SetRotationX(-deltaY);
-			rotateMats[i] = tempMat * rotateMats[i];
-		}
-	}
-	else if(modelIdx < models.size())
+	if (nodeIdx < 0)    // rotate all nodes
 	{
         tempMat.SetRotationY(deltaX);
-		rotateMats[modelIdx] = tempMat * rotateMats[modelIdx];
+        rootNode.rotateMat = tempMat * rootNode.rotateMat;
+        tempMat.SetRotationX(-deltaY);
+        rootNode.rotateMat = tempMat * rootNode.rotateMat;
+
+	}
+	else if(nodeIdx < nodes.size())
+	{
+        CZShape *shape = dynamic_cast<CZShape*>(nodes[nodeIdx]);
+        if(shape && shape->isAnimating)
+        {
+            LOG_WARN("the shape is animating and cannot be controlled!\n");
+            return;
+        }
+        
+        tempMat.SetRotationY(deltaX);
+		nodes[nodeIdx]->rotateMat = tempMat * nodes[nodeIdx]->rotateMat;
 		tempMat.SetRotationX(-deltaY);
-		rotateMats[modelIdx] = tempMat * rotateMats[modelIdx];
+		nodes[nodeIdx]->rotateMat = tempMat * nodes[nodeIdx]->rotateMat;
 	}
 	else
-		LOG_ERROR("modelIdx is beyond the range!\n");
+		LOG_ERROR("nodeIdx is beyond the range!\n");
 
 }
 
-void Application3D::translate(float deltaX, float deltaY, int modelIdx /*= -1*/)
+void Application3D::translate(float deltaX, float deltaY, int nodeIdx /*= -1*/)
 {
 	CZMat4 tempMat;
 	tempMat.SetTranslation(-deltaX, -deltaY, 0);
-	if (modelIdx < 0)
+	if (nodeIdx < 0)
 	{
-		for (auto i = 0; i < models.size(); i++)
-		{
-			translateMats[i] = tempMat * translateMats[i];
-		}
+        rootNode.translateMat = tempMat * rootNode.translateMat;
 	}
-	else if(modelIdx < models.size())
+	else if(nodeIdx < nodes.size())
 	{
-		translateMats[modelIdx] = tempMat * translateMats[modelIdx];
+        CZShape *shape = dynamic_cast<CZShape*>(nodes[nodeIdx]);
+        if(shape && shape->isAnimating)
+        {
+            LOG_WARN("the shape is animating and cannot be controlled!\n");
+            return;
+        }
+        
+		nodes[nodeIdx]->translateMat = tempMat * nodes[nodeIdx]->translateMat;
 	}
 	else
-		LOG_ERROR("modelIdx is beyond the range!\n");
+		LOG_ERROR("nodeIdx is beyond the range!\n");
 }
-void Application3D::scale(float s, int modelIdx /*= -1*/)
+void Application3D::scale(float s, int nodeIdx /*= -1*/)
 {
 	CZMat4 tempMat;
 	tempMat.SetScale(s);
-	if (modelIdx < 0)
+	if (nodeIdx < 0)
 	{
-		for (auto i = 0; i < models.size(); i++)
-		{
-			scaleMats[i] = tempMat * scaleMats[i];
-		}
+        rootNode.scaleMat = tempMat * rootNode.scaleMat;
 	}
-	else if(modelIdx < models.size())
+	else if(nodeIdx < nodes.size())
 	{
-		scaleMats[modelIdx] = tempMat * scaleMats[modelIdx];
+        CZShape *shape = dynamic_cast<CZShape*>(nodes[nodeIdx]);
+        if(shape && shape->isAnimating)
+        {
+            LOG_WARN("the shape is animating and cannot be controlled!\n");
+            return;
+        }
+        
+		nodes[nodeIdx]->scaleMat = tempMat * nodes[nodeIdx]->scaleMat;
 	}
 	else
-		LOG_ERROR("modelIdx is beyond the range!\n");
+		LOG_ERROR("nodeIdx is beyond the range!\n");
 }
 
 // custom config
@@ -641,6 +692,16 @@ bool Application3D::loadShaders()
 
 	pShader = new CZShader("blit","blit",attributes,uniforms);
 	shaders.insert(make_pair(kBlitImage,pShader));
+
+    //
+    attributes.clear();
+    attributes.push_back("inPosition");
+    uniforms.clear();
+    uniforms.push_back("mvpMat");
+    uniforms.push_back("inColor");
+    
+    pShader = new CZShader("blitColor","blitColor",attributes,uniforms);
+    shaders.insert(make_pair(kBlitColor,pShader));
 
 	CZCheckGLError();
 
