@@ -18,3 +18,8 @@ android/app/src/main/libs
 android/app/build
 android/.gradle
 android/.idea
+win/objViewer/vs2012/Debug/
+win/vs2012/bin/
+win/vs2012/obj/Debug/CZMaterialLib.obj
+win/vs2012/obj/Debug/CL.write.1.tlog
+win/vs2012/obj/

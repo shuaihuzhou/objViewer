@@ -7,7 +7,7 @@
 //#include "CZShader.h"
 //#include "CZTexture.h"
 
-#define DEFAULT_GLSL_DIR "../../src/glsl/"
+#define DEFAULT_GLSL_DIR "../../../src/glsl/"
 #ifndef _DEBUG
 	#define _DEBUG
 #endif

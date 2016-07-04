@@ -307,7 +307,7 @@ bool Application3D::createShape(const char* shapeFileName, bool contentInParam /
 {
     CZCube *cube = new CZCube;
     CZPoint3D p(0,0,0);
-    cube->create(p,1,1,1);
+    cube->create(p,10,10,10);
     nodes.push_back(cube);
     return true;
 }
