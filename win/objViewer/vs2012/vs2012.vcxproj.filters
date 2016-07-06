@@ -64,6 +64,12 @@
       <Filter>shape</Filter>
     </ClCompile>
     <ClCompile Include="..\main.cpp" />
+    <ClCompile Include="..\..\..\src\shape\ShZcube.cpp">
+      <Filter>shape</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\shape\ShZshader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\Application3D.h">
@@ -120,9 +126,21 @@
     <ClInclude Include="..\..\..\src\shape\CZShape.h">
       <Filter>shape</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\src\shape\ShZcube.h">
+      <Filter>shape</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\src\shape\ShZshader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\src\scene.cfg" />
     <None Include="..\..\..\src\scene_violin.cfg" />
+    <None Include="..\..\..\src\glsl\vertexShader.vs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="..\..\..\src\glsl\fragmentShader.frag">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

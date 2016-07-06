@@ -9,6 +9,7 @@
 #include "CZGeometry.h"
 #include "CZMaterialLib.h"
 #include "CZShader.h"
+#include "ShZshader.h"
 #include "CZMat4.h"
 #include "CZNode.h"
 

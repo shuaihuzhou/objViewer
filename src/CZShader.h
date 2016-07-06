@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include "ShZshader.h"
 
 class CZShader
 {

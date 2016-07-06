@@ -25,11 +25,11 @@ void InitGL()
 {
 	glewInit();
 
-	if (glewIsSupported("GL_VERSION_3_1"))
-		cout << "Ready for OpenGL 3.1\n";
+	if (glewIsSupported("GL_VERSION_3_3"))
+		cout << "Ready for OpenGL 3.3\n";
 	else
 	{
-		cout << "OpenGL 3.1 not supported\n";
+		cout << "OpenGL 3.3 not supported\n";
 		//exit(1);
 	}
 }
@@ -37,7 +37,7 @@ void InitGL()
 void Init()
 {
 	InitGL();
-	app3d.init("../../../src/scene_violin.cfg");
+	//app3d.init("../../../src/scene_violin.cfg");
 	/*for (auto i = 10; i <= 10; i++)
 	{
 		char path[128];
@@ -54,9 +54,11 @@ void Init()
 
 void Display()
 {	
+	glClear(GL_COLOR_BUFFER_BIT);
 	app3d.frame();
-	glutSwapBuffers();
-	glutReportErrors();
+	/*glutSwapBuffers();
+	glutReportErrors();*/
+	glFlush();
 }
 void Reshape(int w, int h)
 {
@@ -158,6 +160,7 @@ void MouseMove(int x, int y)
 
 void idle()
 {
+	app3d.animateShape();
 }
 
 void Menu(int value)
@@ -180,7 +183,7 @@ void InitMenu()
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitDisplayMode(/*GLUT_DOUBLE | */GLUT_RGBA/* | GLUT_DEPTH*/);
 	glutInitWindowSize(winWidth, winHeight);
 	glutCreateWindow("objViewer");
 

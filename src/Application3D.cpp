@@ -3,6 +3,7 @@
 #include "CZGeometry.h"
 #include "shape/CZShape.h"
 #include "shape/CZCube.hpp"
+#include "shape/ShZcube.h"
 #include "CZLog.h"
 #include <ctime>
 #include <vector>
@@ -220,9 +221,18 @@ bool Application3D::setRenderBufferSize(int w, int h)
 	return true;
 }
 
+void Application3D::animateShape()
+{
+	nodes[0]->unfold();
+}
+
 void Application3D::frame()
 {
-    clock_t nowTime = clock();
+	ShZshader *pShader = new ShZshader("G:/git/src/glsl/vertexShader.vs","G:/git/src/glsl/fragmentShader.frag");
+	nodes[0]->draw1(pShader);
+	delete pShader;
+	pShader = NULL;
+    /*clock_t nowTime = clock();
     animationManager.update(nowTime);
     
 #ifdef SHOW_RENDER_TIME
@@ -300,16 +310,22 @@ void Application3D::frame()
 	finish = clock();
 	double totalTime = (double)(finish - start) / CLOCKS_PER_SEC;
 	LOG_INFO("rendering time is %0.6f, FPS = %0.1f\n",totalTime, 1.0f/totalTime);
-#endif
+#endif*/
 }
 
 bool Application3D::createShape(const char* shapeFileName, bool contentInParam /*= false*/)
 {
-    CZCube *cube = new CZCube;
+   /* CZCube *cube = new CZCube;
     CZPoint3D p(0,0,0);
     cube->create(p,10,10,10);
-    nodes.push_back(cube);
-    return true;
+    nodes.push_back(cube);*/
+
+	cube* cube1;
+	cube1 = new cube;
+	cube1->init();
+	nodes.push_back(cube1);
+
+  return true;
 }
 
 bool Application3D::clearShapes()

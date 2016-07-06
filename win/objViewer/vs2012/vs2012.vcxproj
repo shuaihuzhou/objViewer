@@ -101,6 +101,8 @@
     <ClCompile Include="..\..\..\src\CZShader.cpp" />
     <ClCompile Include="..\..\..\src\CZUtil.cpp" />
     <ClCompile Include="..\..\..\src\shape\CZCube.cpp" />
+    <ClCompile Include="..\..\..\src\shape\ShZcube.cpp" />
+    <ClCompile Include="..\..\..\src\shape\ShZshader.cpp" />
     <ClCompile Include="..\main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -122,8 +124,12 @@
     <ClInclude Include="..\..\..\src\CZVector.h" />
     <ClInclude Include="..\..\..\src\shape\CZCube.hpp" />
     <ClInclude Include="..\..\..\src\shape\CZShape.h" />
+    <ClInclude Include="..\..\..\src\shape\ShZcube.h" />
+    <ClInclude Include="..\..\..\src\shape\ShZshader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\src\glsl\fragmentShader.frag" />
+    <None Include="..\..\..\src\glsl\vertexShader.vs" />
     <None Include="..\..\..\src\scene.cfg" />
     <None Include="..\..\..\src\scene_violin.cfg" />
   </ItemGroup>

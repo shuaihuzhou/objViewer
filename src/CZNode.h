@@ -31,6 +31,8 @@ public:
     NodeType getType(){ return _type;}
     
     virtual void draw(CZShader *pShader){};
+		virtual void draw1(ShZshader* pShader){};
+		virtual void unfold(){};
     
     //// properties
     CZMat4 rotateMat, translateMat, scaleMat;
