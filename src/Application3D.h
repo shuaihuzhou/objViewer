@@ -11,8 +11,6 @@
 #include "CZObjModel.h"
 #include "animation/CZAnimaitonManager.hpp"
 
-typedef std::vector<CZNode*> CZNodeArray;
-
 class Application3D : private CZObjFileParser
 {
 public:
@@ -31,13 +29,16 @@ public:
 	bool loadObjModel(const char* filename, bool quickLoad = true);
     bool clearObjModel();
 	bool setRenderBufferSize(int w, int h);
-	void frame();
+    // frame
+    //  called to draw the scene
+    //  \note `nowTime` is only necessary when `animation` is added
+	void frame(double nowTime = 0.0f);
 	void reset();
     
     // shape
     bool createShape(const char* shapeFileName, bool contentInParam = false);
     bool clearShapes();
-    void animateShape();
+    bool animateShape(const char* shapeName, const char* animName, double nowTime);
 
 #ifdef	__ANDROID__
 	bool createShader(ShaderType type,const char* vertFile, const char* fragFile, std::vector<std::string> &attributes,std::vector<std::string> &uniforms);
@@ -54,9 +55,9 @@ public:
     
 	// control
 	//	/note : (deltaX,deltaY) is in the screen coordinate system
-	void rotate(float deltaX, float deltaY, int nodeIdx = -1);
-	void translate(float deltaX, float deltaY, int nodeIdx = -1);
-	void scale(float s, int nodeIdx = -1);
+	void rotate(float deltaX, float deltaY, const char *nodeName = nullptr);
+	void translate(float deltaX, float deltaY, const char *nodeName = nullptr);
+	void scale(float s, const char *nodeName = nullptr);
 
 	// custom config
 	void setBackgroundColor(float r, float g, float b, float a);
@@ -94,7 +95,6 @@ private:
 private:
 	CZScene scene;
 	ShaderMap shaders;
-    CZNodeArray nodes;
     CZNode rootNode;
 	CZMat4 projMat;
     CZAnimationManager animationManager;

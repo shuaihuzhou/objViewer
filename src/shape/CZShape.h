@@ -15,6 +15,9 @@ class CZShape : public CZNode
 {
 public:
     CZShape(): CZNode(kShape), isAnimating(false){};
+  
+    virtual void fold(float ratio) { isAnimating = true; };
+    virtual void unFold(float ratio) { isAnimating = true; };
     
     /// properties
     bool isAnimating;

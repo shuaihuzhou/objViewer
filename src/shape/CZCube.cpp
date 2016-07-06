@@ -8,15 +8,17 @@
 
 #include "CZCube.hpp"
 #include "../CZLog.h"
+#include "../CZMat4.h"
 
 using namespace std;
 
-unsigned char CZCube::indices[] = {0,1,2,3,
-                                    0,2,4,6,
-                                    2,3,6,7,
-                                    0,1,4,5,
-                                    4,5,6,7,
-                                    1,3,5,7};
+unsigned char CZCube::indices[] = {7,6,3,2,     //< top
+                                    0,1,2,3,    //< front
+                                    1,5,3,7,    //< right
+                                    4,0,6,2,    //< left
+                                    5,4,7,6,    //< back
+                                    1,0,5,4     //< bottom
+};
 
 CZCube::CZCube()
 {
@@ -24,12 +26,19 @@ CZCube::CZCube()
 
 CZCube::~CZCube()
 {
+    for(vector<CZFace *>::iterator itr = faces.begin(); itr != faces.end(); itr ++)
+        delete  *itr;
+    
+    positions.clear();
+    normals.clear();
 }
 
 void CZCube::create(CZPoint3D &origin, float width, float length, float height)
 {
+    positions.clear();
+    normals.clear();
+    
     /// create original data
-    vector<CZPoint3D> positions,normals;
     for(int i = 0; i < 8; i ++)
     {
         int w = i & 1;
@@ -47,11 +56,16 @@ void CZCube::create(CZPoint3D &origin, float width, float length, float height)
     
     for(auto i = 0; i < 6; i++)
     {
-        kd[i][0] = 1.0f * rand() / RAND_MAX;
-        kd[i][1] = 1.0f * rand() / RAND_MAX;
-        kd[i][2] = 1.0f * rand() / RAND_MAX;
-        kd[i][3] = 1.0f;
+        CZFace *pFace = new CZFace();
+        
+        pFace->indexes = new unsigned char[4];
+        memcpy(pFace->indexes, &indices[i*4], sizeof(unsigned char)*4);
+        
+        /// treat face as non-subnode, for draw correctly
+        faces.push_back(pFace);
+        pFace->parentNode = this;
     }
+    
     /// transfer to graphic card
     // vao
     GL_GEN_VERTEXARRAY(1, &m_vao);
@@ -74,43 +88,88 @@ void CZCube::create(CZPoint3D &origin, float width, float length, float height)
     CZCheckGLError();
     
     GL_BIND_VERTEXARRAY(0);
-    
-    positions.clear();
-    normals.clear();
-    
 }
 
-void CZCube::draw(CZShader *pShader)
+void CZCube::unFold(float ratio)
 {
-    if(pShader == NULL)
+    CZShape::unFold(ratio);
+    
+    float totalAngle = -90;
+    
+    // step 1 - top face
+    if(ratio <= 0.2f)
     {
-        LOG_ERROR("pShader is NULL!\n");
-        return;
+        CZVector3D<float > from = positions[faces[0]->indexes[0]];
+        CZVector3D<float > to = positions[faces[0]->indexes[1]];
+        float angle = (ratio - 0.0f) / 0.2f * totalAngle;
+        faces[0]->setRotateAroundAxis(angle, from, to);
     }
     
+    // step 2 - front
+    else if(ratio <= 0.4f)
+    {
+        CZVector3D<float > from = positions[faces[1]->indexes[0]];
+        CZVector3D<float > to = positions[faces[1]->indexes[1]];
+        float angle = (ratio - 0.2f) / 0.2f * totalAngle;
+        faces[1]->setRotateAroundAxis(angle, from, to);
+    }
+    
+    // step 3 - left
+    else if(ratio <= 0.6f)
+    {
+        CZVector3D<float > from = positions[faces[2]->indexes[0]];
+        CZVector3D<float > to = positions[faces[2]->indexes[1]];
+        float angle = (ratio - 0.4f) / 0.2f * totalAngle;
+        faces[2]->setRotateAroundAxis(angle, from, to);
+    }
+    
+    // step 4 - right
+    else if(ratio <= 0.8f)
+    {
+        CZVector3D<float > from = positions[faces[3]->indexes[0]];
+        CZVector3D<float > to = positions[faces[3]->indexes[1]];
+        float angle = (ratio - 0.6f) / 0.2f * totalAngle;
+        faces[3]->setRotateAroundAxis(angle, from, to);
+    }
+    
+    // step 5 - front & back
+    else if(ratio <= 1.0f)
+    {
+        CZVector3D<float > from = positions[faces[4]->indexes[0]];
+        CZVector3D<float > to = positions[faces[4]->indexes[1]];
+        float angle = (ratio - 0.8f) / 0.2f * totalAngle;
+        faces[4]->setRotateAroundAxis(angle, from, to);
+        
+        CZVector3D<float > from1 = positions[faces[0]->indexes[0]];
+        CZVector3D<float > to1 = positions[faces[0]->indexes[1]];
+        faces[0]->setRotateAroundAxis(-90.f, from1, to1);
+        faces[0]->rotateAroundAxis(angle, from, to);
+    }
+    else
+        isAnimating = false;
+}
+
+bool CZCube::draw(CZShader *pShader, CZMat4 &viewProjMat)
+{
+    if(CZNode::draw(pShader, viewProjMat) != true) return false;        ///< render subnodes
+
     GL_BIND_VERTEXARRAY(m_vao);
     
-    for (int i = 0; i < 6; i ++)
-    {
-        float ke[4], ka[4], ks[4], Ns = 10.0;
-        ka[0] = 0.2;    ka[1] = 0.2;    ka[2] = 0.2;
-        ke[0] = 0.0;    ke[1] = 0.0;    ke[2] = 0.0;
-        ks[0] = 0.0;    ks[1] = 0.0;    ks[2] = 0.0;
-        Ns = 10.0;
-        
-        glUniform3f(pShader->getUniformLocation("material.kd"), kd[i][0], kd[i][1], kd[i][2]);
-        glUniform3f(pShader->getUniformLocation("material.ka"), ka[0], ka[1], ka[2]);
-        glUniform3f(pShader->getUniformLocation("material.ke"), ke[0], ke[1], ke[2]);
-        glUniform3f(pShader->getUniformLocation("material.ks"), ks[0], ks[1], ks[2]);
-        glUniform1f(pShader->getUniformLocation("material.Ns"), Ns);
-        
-        int hasTex = 0;
-        
-        glUniform1i(pShader->getUniformLocation("hasTex"), hasTex);
-        glUniform1i(pShader->getUniformLocation("tex"), 0);
-        glDrawElements(GL_TRIANGLE_STRIP, 4,  GL_UNSIGNED_BYTE, &indices[i*4]);
-    }
+    for(vector<CZFace* >::iterator itr = faces.begin(); itr != faces.end(); itr ++)
+        (*itr)->draw(pShader, viewProjMat);
     
     GL_BIND_VERTEXARRAY(0);
+    
     CZCheckGLError();
+    
+    return true;
+}
+
+void CZCube::resetMatrix()
+{
+    CZNode::resetMatrix();
+    for(vector<CZFace*>::iterator itr = faces.begin(); itr != faces.end(); itr ++)
+    {
+        (*itr)->resetMatrix();
+    }
 }

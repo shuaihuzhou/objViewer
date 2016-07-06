@@ -3,7 +3,11 @@
 #include "CZGeometry.h"
 #include "shape/CZShape.h"
 #include "shape/CZCube.hpp"
+<<<<<<< HEAD
 #include "shape/ShZcube.h"
+=======
+#include "animation/CZShapeAnimation.hpp"
+>>>>>>> 7b0c7bd2f1c9219c601e952f5ce54f93311c95ae
 #include "CZLog.h"
 #include <ctime>
 #include <vector>
@@ -35,8 +39,6 @@ Application3D::Application3D()
 
 Application3D::~Application3D()
 {
-    clearObjModel();
-
 	for (map<ShaderType,CZShader*>::iterator itr = shaders.begin(); itr != shaders.end(); itr++)
 	{
 		delete itr->second;
@@ -145,8 +147,8 @@ bool Application3D::loadObjModel(const char* filename, bool quickLoad /* = true 
 		if(success && quickLoad)
 			pModel->saveAsBinary(tempFileName);
 	}
-    
-    nodes.push_back(pModel);
+
+    rootNode.addSubNode(strFileName, pModel);
 
 	reset();
 
@@ -158,16 +160,7 @@ bool Application3D::loadObjModel(const char* filename, bool quickLoad /* = true 
 
 bool Application3D::clearObjModel()
 {
-    for(CZNodeArray::iterator itr = nodes.begin(); itr != nodes.end(); itr ++)
-    {
-        if((*itr)->getType() == CZNode::kObjModel)
-        {
-            delete (CZObjModel*)(*itr);
-            itr = nodes.erase(itr);
-        }
-    }
-
-	return true;
+    return rootNode.removeAllSubNodesOfType(CZNode::kObjModel);
 }
 
 bool Application3D::setRenderBufferSize(int w, int h)
@@ -221,6 +214,7 @@ bool Application3D::setRenderBufferSize(int w, int h)
 	return true;
 }
 
+<<<<<<< HEAD
 void Application3D::animateShape()
 {
 	nodes[0]->unfold();
@@ -233,12 +227,11 @@ void Application3D::frame()
 	delete pShader;
 	pShader = NULL;
     /*clock_t nowTime = clock();
+=======
+void Application3D::frame(double nowTime)
+{
+>>>>>>> 7b0c7bd2f1c9219c601e952f5ce54f93311c95ae
     animationManager.update(nowTime);
-    
-#ifdef SHOW_RENDER_TIME
-	static clock_t start, finish;
-	start = clock();
-#endif
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
@@ -253,9 +246,10 @@ void Application3D::frame()
 	if (backgroundImage && !blitBackgroundImage()) return;
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	CZMat4 viewMat,modelMat;
+	CZMat4 viewMat,viewProjMat;
 	viewMat.SetLookAt(scene.eyePosition.x, scene.eyePosition.y, scene.eyePosition.z, 0, 0, 0, 0, 1, 0);
-
+    viewProjMat = projMat * viewMat;
+    
 	CZShader *pShader = getShader(kDirectionalLightShading);
 
 	if (pShader == NULL)
@@ -283,18 +277,8 @@ void Application3D::frame()
 		scene.directionalLight.intensity.z);
 	CZCheckGLError();
 
-	for (auto i = 0; i < nodes.size(); i++) {
-		modelMat = rootNode.translateMat * nodes[i]->translateMat *
-                    rootNode.scaleMat * nodes[i]->scaleMat *
-                    rootNode.rotateMat * nodes[i]->rotateMat;
-		glUniformMatrix4fv(pShader->getUniformLocation("mvpMat"), 1, GL_FALSE, projMat * viewMat * modelMat);
-		glUniformMatrix4fv(pShader->getUniformLocation("modelMat"), 1, GL_FALSE, modelMat);
-		glUniformMatrix4fv(pShader->getUniformLocation("modelInverseTransposeMat"), 1, GL_FALSE, modelMat.GetInverseTranspose());
-
-		CZNode *pNode = nodes[i];
-		pNode->draw(pShader);
-	}
-	CZCheckGLError();
+    rootNode.draw(pShader,viewProjMat);
+    CZCheckGLError();
 
 	pShader->end();
 #ifdef USE_OPENGL
@@ -305,12 +289,15 @@ void Application3D::frame()
 	glutSolidSphere(2, 100, 100);
 	glPopMatrix();
 #endif
+<<<<<<< HEAD
 
 #ifdef SHOW_RENDER_TIME
 	finish = clock();
 	double totalTime = (double)(finish - start) / CLOCKS_PER_SEC;
 	LOG_INFO("rendering time is %0.6f, FPS = %0.1f\n",totalTime, 1.0f/totalTime);
 #endif*/
+=======
+>>>>>>> 7b0c7bd2f1c9219c601e952f5ce54f93311c95ae
 }
 
 bool Application3D::createShape(const char* shapeFileName, bool contentInParam /*= false*/)
@@ -318,6 +305,7 @@ bool Application3D::createShape(const char* shapeFileName, bool contentInParam /
    /* CZCube *cube = new CZCube;
     CZPoint3D p(0,0,0);
     cube->create(p,10,10,10);
+<<<<<<< HEAD
     nodes.push_back(cube);*/
 
 	cube* cube1;
@@ -326,28 +314,51 @@ bool Application3D::createShape(const char* shapeFileName, bool contentInParam /
 	nodes.push_back(cube1);
 
   return true;
+=======
+    string strShapeName(shapeFileName);
+    rootNode.addSubNode(strShapeName, cube);
+    
+    return true;
+>>>>>>> 7b0c7bd2f1c9219c601e952f5ce54f93311c95ae
 }
 
 bool Application3D::clearShapes()
 {
-    for(CZNodeArray::iterator itr = nodes.begin(); itr != nodes.end(); itr ++)
+    return rootNode.removeAllSubNodesOfType(CZNode::kShape);
+}
+
+bool Application3D::animateShape(const char* shapeName, const char* animName, double nowTime)
+{
+    if(shapeName == nullptr || animName == nullptr)
     {
-        if((*itr)->getType() == CZNode::kShape)
-        {
-            delete (CZShape*)(*itr);
-            itr = nodes.erase(itr);
-        }
+        LOG_ERROR("shape name or animation name is nullptr!\n");
+        return false;
+    }
+    string strShapeName(shapeName);
+    string strAnimName(animName);
+    CZNode *pNode = rootNode.getNode(strShapeName);
+    if(pNode == nullptr)
+    {
+        LOG_ERROR("node(%s) does not exist!\n",shapeName);
+        return false;
     }
     
-    return true;
+    // test if animation with this node has been added
+    CZAnimation *pAnim = animationManager.getAnimation(strAnimName);
+    if(pAnim == nullptr || pAnim->getNode() != pNode)
+    {
+        // add `unfold` animation
+        CZShapeAnimation *pShapeAnimation = new CZShapeAnimation(2000.0f);
+        pShapeAnimation->setNode(pNode);
+        animationManager.registerAnimation(strAnimName, pShapeAnimation);
+        pAnim = pShapeAnimation;
+    }
+    
+    return pAnim->start(strAnimName, nowTime);
 }
 
 void Application3D::reset()
 {
-	/// model matrix
-	for (auto i = 0; i < nodes.size(); i ++) {
-        nodes[i]->resetMatrix();
-	}
     rootNode.resetMatrix();
     
 	/// color
@@ -445,10 +456,10 @@ void Application3D::setGLSLDirectory(const char* glslDir)
 }
 
 // control
-void Application3D::rotate(float deltaX, float deltaY, int nodeIdx /*= -1*/)
+void Application3D::rotate(float deltaX, float deltaY, const char *nodeName /*= nullptr*/)
 {
 	CZMat4 tempMat;
-	if (nodeIdx < 0)    // rotate all nodes
+	if (nodeName == nullptr)    // rotate all nodes
 	{
         tempMat.SetRotationY(deltaX);
         rootNode.rotateMat = tempMat * rootNode.rotateMat;
@@ -456,9 +467,14 @@ void Application3D::rotate(float deltaX, float deltaY, int nodeIdx /*= -1*/)
         rootNode.rotateMat = tempMat * rootNode.rotateMat;
 
 	}
-	else if(nodeIdx < nodes.size())
+    
+	else
 	{
-        CZShape *shape = dynamic_cast<CZShape*>(nodes[nodeIdx]);
+        string strNodeName(nodeName);
+        CZNode *node = rootNode.getNode(strNodeName);
+        if(node == nullptr) return;
+        
+        CZShape *shape = dynamic_cast<CZShape*>(node);
         if(shape && shape->isAnimating)
         {
             LOG_WARN("the shape is animating and cannot be controlled!\n");
@@ -466,58 +482,62 @@ void Application3D::rotate(float deltaX, float deltaY, int nodeIdx /*= -1*/)
         }
         
         tempMat.SetRotationY(deltaX);
-		nodes[nodeIdx]->rotateMat = tempMat * nodes[nodeIdx]->rotateMat;
+		node->rotateMat = tempMat * node->rotateMat;
 		tempMat.SetRotationX(-deltaY);
-		nodes[nodeIdx]->rotateMat = tempMat * nodes[nodeIdx]->rotateMat;
+		node->rotateMat = tempMat * node->rotateMat;
 	}
-	else
-		LOG_ERROR("nodeIdx is beyond the range!\n");
 
 }
 
-void Application3D::translate(float deltaX, float deltaY, int nodeIdx /*= -1*/)
+void Application3D::translate(float deltaX, float deltaY,  const char *nodeName /*= nullptr*/)
 {
 	CZMat4 tempMat;
 	tempMat.SetTranslation(-deltaX, -deltaY, 0);
-	if (nodeIdx < 0)
+	if (nodeName == nullptr)
 	{
         rootNode.translateMat = tempMat * rootNode.translateMat;
 	}
-	else if(nodeIdx < nodes.size())
+	else
 	{
-        CZShape *shape = dynamic_cast<CZShape*>(nodes[nodeIdx]);
+        string strNodeName(nodeName);
+        CZNode *node = rootNode.getNode(strNodeName);
+        if(node == nullptr) return;
+        
+        CZShape *shape = dynamic_cast<CZShape*>(node);
         if(shape && shape->isAnimating)
         {
             LOG_WARN("the shape is animating and cannot be controlled!\n");
             return;
         }
         
-		nodes[nodeIdx]->translateMat = tempMat * nodes[nodeIdx]->translateMat;
+		node->translateMat = tempMat * node->translateMat;
 	}
-	else
-		LOG_ERROR("nodeIdx is beyond the range!\n");
+	
 }
-void Application3D::scale(float s, int nodeIdx /*= -1*/)
+void Application3D::scale(float s,  const char *nodeName /*= nullptr*/)
 {
 	CZMat4 tempMat;
 	tempMat.SetScale(s);
-	if (nodeIdx < 0)
+	if (nodeName == nullptr)
 	{
         rootNode.scaleMat = tempMat * rootNode.scaleMat;
 	}
-	else if(nodeIdx < nodes.size())
+	else
 	{
-        CZShape *shape = dynamic_cast<CZShape*>(nodes[nodeIdx]);
+        string strNodeName(nodeName);
+        CZNode *node = rootNode.getNode(strNodeName);
+        if(node == nullptr) return;
+
+        
+        CZShape *shape = dynamic_cast<CZShape*>(node);
         if(shape && shape->isAnimating)
         {
             LOG_WARN("the shape is animating and cannot be controlled!\n");
             return;
         }
         
-		nodes[nodeIdx]->scaleMat = tempMat * nodes[nodeIdx]->scaleMat;
+		node->scaleMat = tempMat * node->scaleMat;
 	}
-	else
-		LOG_ERROR("nodeIdx is beyond the range!\n");
 }
 
 // custom config

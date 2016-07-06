@@ -282,14 +282,15 @@ bool CZObjModel::loadBinary(const std::string& path,const char *originalPath/*  
     return true;
 }
 
-void CZObjModel::draw(CZShader* pShader)
+bool CZObjModel::draw(CZShader* pShader, CZMat4 &viewProjMat)
 {
-    if(pShader == NULL)
-    {
-        LOG_ERROR("pShader is NULL!\n");
-        return;
-    }
+    if(CZNode::draw(pShader, viewProjMat) != true) return false;
 
+    CZMat4 modelMat = getTransformMat();
+    glUniformMatrix4fv(pShader->getUniformLocation("mvpMat"), 1, GL_FALSE, viewProjMat * modelMat);
+    glUniformMatrix4fv(pShader->getUniformLocation("modelMat"), 1, GL_FALSE, modelMat);
+    glUniformMatrix4fv(pShader->getUniformLocation("modelInverseTransposeMat"), 1, GL_FALSE, modelMat.GetInverseTranspose());
+    
     GL_BIND_VERTEXARRAY(m_vao);
 
     for (vector<CZGeometry*>::iterator itr = geometries.begin(); itr != geometries.end(); itr++)
@@ -337,6 +338,8 @@ void CZObjModel::draw(CZShader* pShader)
     }
     
     GL_BIND_VERTEXARRAY(0);
+    
+    return true;
 }
 
 
@@ -474,17 +477,17 @@ void CZObjModel::parseVertexTexCoord(std::ifstream &ifs)
 
 void CZObjModel::parseFace(std::ifstream &ifs)
 {
-	CZFace face;
+	CZTriangle triangle;
 	int data[3] = { -1, -1, -1 };
 	int count;
 
 	for (int i = 0; i < 3; i++){
 		count = parseNumberElement(ifs, data);
-		face.addVertTexNorm(data[0], data[1], data[2]);
+		triangle.addVertTexNorm(data[0], data[1], data[2]);
 	}
 	skipLine(ifs);
 
-	pCurGeometry->addFace(face);
+	pCurGeometry->addTriangle(triangle);
 
 	ifs.clear();
 }

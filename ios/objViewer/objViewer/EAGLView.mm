@@ -16,6 +16,7 @@
 
 #define USE_DEPTH_BUFFER 1
 #define USE_PIC_BACKGROUND 0
+#define SHOW_ANIMAITON
 //#define SHOW_RENDER_TIME
 //declare private methods, so they can be used everywhere in this file
 @interface EAGLView (PrivateMethods)
@@ -181,7 +182,9 @@
         //if our framebuffers have not been created yet, do that now!
         glBindFramebuffer(GL_FRAMEBUFFER, msaaFramebuffer);
         glBindRenderbuffer(GL_RENDERBUFFER, msaaRenderbuffer);
-        app3d.frame();
+        
+        NSTimeInterval nowTime = [[NSDate date] timeIntervalSince1970] * 1000.0f;
+        app3d.frame(nowTime);
         //we need a lesson to be able to render something
         
         //perform the actual drawing!
@@ -211,7 +214,7 @@
      [self deleteFramebuffer];
      [self createFramebuffer];*/
     
-#ifdef SHOW_RENDER_TIME
+#if  defined(SHOW_RENDER_TIME) || defined(SHOW_ANIMAITON)
     animationTimer = [NSTimer scheduledTimerWithTimeInterval:animationInterval target:self selector:@selector(drawFrame) userInfo:nil repeats:YES];
 #endif
 }
@@ -220,7 +223,7 @@
 //we have to be able to stop the render loop
 - (void)stopRenderLoop
 {
-#ifdef SHOW_RENDER_TIME
+#if  defined(SHOW_RENDER_TIME) || defined(SHOW_ANIMAITON)
     [animationTimer invalidate];
 #endif
 }
@@ -280,9 +283,15 @@
     {
         [EAGLContext setCurrentContext:context];
         
-        result = app3d.createShape(nullptr);
+        result = app3d.createShape("cube");
     }
     return result;
+}
+
+- (BOOL) startUnFold
+{
+    NSTimeInterval nowTime = [[NSDate date] timeIntervalSince1970] * 1000.0f;
+    return app3d.animateShape("cube", "unfold", nowTime);
 }
 
 - (void) setCameraPositionWithX:(float)x Y:(float)y Z:(float) z

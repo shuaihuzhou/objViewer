@@ -9,21 +9,25 @@
 #include "CZAnimation.hpp"
 
 
-CZAnimation::CZAnimation(): _isPlaying(false)
+CZAnimation::CZAnimation(double totalTime): _isPlaying(false), _totalTime(totalTime)
 {
+    ptrNode = nullptr;
 }
 
-void CZAnimation::stop()
+bool CZAnimation::start(std::string &name, double time)
 {
-    _isPlaying = false;
-}
-
-void CZAnimation::play()
-{
+    if(ptrNode == nullptr)
+    {
+        LOG_DEBUG("ptrNode is nullptr!\n");
+        return false;
+    }
+    
+    if(_isPlaying) return false;
+    
     _isPlaying = true;
-}
-
-void CZAnimation::pause()
-{
-    _isPlaying = false;
+    _playingName = name;
+    _startTime = time;
+    
+    LOG_DEBUG("animation start time - %0.3fms\n", _startTime);
+    return true;
 }

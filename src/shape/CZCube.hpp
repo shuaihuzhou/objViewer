@@ -11,6 +11,7 @@
 
 #include "CZShape.h"
 #include "../CZBasic.h"
+#include "CZFace.hpp"
 
 #include <vector>
 
@@ -20,15 +21,17 @@ public:
     CZCube();
     ~CZCube();
     
-    void draw(CZShader *pShader);
+    bool draw(CZShader *pShader, CZMat4 &viewProjMat) override;
     
     void create(CZPoint3D &origin, float width, float length, float height);
-    void fold(long time);
-    void unFold(long time);
-    void finished();
+    void fold(float ratio) override {};
+    void unFold(float ratio) override;
+    
+    void resetMatrix() override;
 private:
     static unsigned char indices[];
-    float kd[6][4];
+    std::vector<CZFace* > faces;
+    std::vector<CZPoint3D> positions,normals;
 };
 
 #endif /* CZCube_hpp */
